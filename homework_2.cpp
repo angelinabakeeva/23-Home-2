@@ -15,11 +15,14 @@ public:
     Matrix();
     Matrix(int, int);
     Matrix(const Matrix&);
+    Matrix(const char* fileName);
     ~Matrix();
 
     void readFromConsole();
+    void readFromConsoleWithSize(int, int);
     void printToConsole() const;
-
+    static Matrix<T> getZeroMatrix(int ROWS, int COLUMNS);
+    static Matrix<T> getIdentityMatrix(int ROWS, int COLUMNS);
     void readFromFile(const char*);
     void writeToFile(const char*);
 
@@ -50,20 +53,21 @@ Matrix<T>::Matrix()
 template <class T>
 Matrix<T>::Matrix(int ROWS, int COLUMNS)
 {
-    matrix = NULL;
-    if (ROWS > 0 && COLUMNS > 0)
+    if (ROWS <= 0 || COLUMNS <= 0)
     {
-        rows = ROWS;
-        columns = COLUMNS;
+        cerr << "Rows and columns can't be less or equal than zero" << endl;
+        throw invalid_argument("");
+    }
 
-        matrix = new T*[rows];
-        for (int r = 0; r < rows; r++)
+    matrix = new T * [ROWS];
+    rows = ROWS;
+    columns = COLUMNS;
+    for (int r = 0; r < ROWS; r++)
+    {
+        matrix[r] = new T[COLUMNS];
+        for (int c = 0; c < COLUMNS; c++)
         {
-            matrix[r] = new T[columns];
-            for (int c = 0; c < columns; c++)
-            {
-                matrix[r][c] = 0;
-            }
+            matrix[r][c] = 0;
         }
     }
 }
@@ -83,6 +87,29 @@ Matrix<T>::Matrix(const Matrix& other)
         }
     }
 }
+
+template <class T>
+Matrix<T>::Matrix(const char* fileName)
+{
+    ifstream inputFile(fileName);
+    if (!inputFile)
+    {
+        cerr << "Error opening file." << endl;
+        return;
+    }
+
+    int strf, stlf;
+    inputFile >> strf >> stlf;
+    for (int i = 0; i < strf; i++)
+    {
+        for (int j = 0; j < stlf; j++)
+        {
+            inputFile >> matrix[i][j];
+        }
+    }
+    inputFile.close();
+}
+
 template <class T>
 Matrix<T>::~Matrix()
 {
@@ -90,7 +117,7 @@ Matrix<T>::~Matrix()
     {
         delete matrix[r];
     }
-    delete matrix;
+    delete matrix; //delete[]
     matrix = NULL;
 }
 
@@ -101,10 +128,42 @@ void Matrix<T>::readFromConsole()
     {
         for (int j = 0; j < columns; j++)
         {
+
             cout << "Print element on this position (row - " << i + 1 << " column - " << j + 1 << "): " << endl;
             cin >> matrix[i][j];
         }
     }
+}
+
+template <class T>
+void Matrix<T>::readFromConsoleWithSize(int ROWS, int COLUMNS)
+{
+    rows = ROWS;
+    columns = COLUMNS;
+    matrix = new T*[rows];
+    for (int r = 0; rows > r; r++)
+    {
+        matrix[r] = new T[columns];
+        for (int c = 0; c < columns; c++)
+        {
+            cout << "Print element on this position (row - " << r + 1 << " column - " << c + 1 << "): " << endl;
+            cin >> matrix[r][c];
+        }
+    }
+}
+
+template<class T>
+ostream& operator<<(ostream& output, const Matrix<T>& matrix)
+{
+    for (int i = 0; i < matrix.rows; i++)
+    {
+        for (int j = 0; j < matrix.columns; j++)
+        {
+            output << matrix.matrix[i][j] << " ";
+        }
+        output << std::endl;
+    }
+    return output;
 }
 
 template <class T>
@@ -132,9 +191,9 @@ void Matrix<T>::readFromFile(const char* fileName)
     }
     int strf, stlf;
     inputFile >> strf >> stlf;
-    for (int i = 0; i < rows; i++)
+    for (int i = 0; i < strf; i++)
     {
-        for (int j = 0; j < columns; j++)
+        for (int j = 0; j < stlf; j++)
         {
             inputFile >> matrix[i][j];
         }
@@ -410,6 +469,7 @@ Matrix<T> operator! (const Matrix<T>& a)
     if (a.rows != a.columns)
     {
         cerr << "MATRIX SHOULD BE SQUARED" << endl;
+        throw invalid_argument("MATRIX SHOULD BE SQUARED");
     }
 
     Matrix<T> result(a.rows, a.columns);
@@ -418,6 +478,7 @@ Matrix<T> operator! (const Matrix<T>& a)
     if (det == 0)
     {
         cerr << "MATRIX IS NOT INVERSE" << endl;
+        throw invalid_argument("MATRIX IS NOT INVERSE");
     }
 
     Matrix<T> another(a.rows, a.columns);
@@ -471,6 +532,54 @@ Matrix<T> operator! (const Matrix<T>& a)
     return result;
 }
 
+template <class T>
+Matrix<T> Matrix<T>::getZeroMatrix(int ROWS, int COLUMNS) //Matrix<T>::Matrix(int ROWS, int COLUMNS)
+{
+    if (ROWS <= 0 || COLUMNS <= 0)
+    {
+        cerr << "Rows and columns can't be less or equal than zero" << endl;
+        throw invalid_argument("");
+    }
+
+    auto matrix = new T * [ROWS];
+    for (int r = 0; r < ROWS; r++)
+    {
+        matrix[r] = new T[COLUMNS];
+        for (int c = 0; c < COLUMNS; c++)
+        {
+            matrix[r][c] = 0;
+        }
+    }
+    return matrix;
+}
+
+template <class T>
+Matrix<T> Matrix<T>::getIdentityMatrix(int ROWS, int COLUMNS) //Matrix<T>::Matrix(int ROWS, int COLUMNS)
+{
+    if (ROWS <= 0 || COLUMNS <= 0)
+    {
+        cerr << "Rows and columns can't be less or equal than zero" << endl;
+        throw invalid_argument("");
+    }
+
+    auto matrix = new T * [ROWS];
+    for (int r = 0; r < ROWS; r++)
+    {
+        matrix[r] = new T[COLUMNS];
+        for (int c = 0; c < COLUMNS; c++)
+        {
+            if (r == c)
+            {
+                matrix[r][c] = 1;
+            }
+            else
+            {
+                matrix[r][c] = 0;
+            }
+        }
+    }
+    return matrix;
+}
 int main()
 {
     int rows, columns;
@@ -478,80 +587,5 @@ int main()
     cin >> rows;
     cout << "Print the number of columns: " << endl;
     cin >> columns;
-    Matrix<int> A(rows, columns);
-    A.readFromConsole();
-    A.printToConsole();
-    /*int strf, stlf;
-    ifstream inputFile("example.txt");
-    inputFile >> strf >> stlf;
-    Matrix B(strf, stlf);
-    B.readFromFile("example.txt");
-    B.writeToFile("test.txt");
-    Matrix C = A * B;
-    cout << "A * B = \n";
-    C.printToConsole();
-    double scalar1;
-    cout << "Print the scalar for multiplication (scalar will be on the right side): \n";
-    cin >> scalar1;
-    Matrix D = A * scalar1;
-    cout << "A * " << scalar1 << " = \n";
-    D.printToConsole();
-    double scalar2;
-    cout << "Print the scalar for multiplication (scalar will be on the left side): \n";
-    cin >> scalar2;
-    Matrix E = scalar2 * B;
-    cout << scalar2 << " * B "<< " = \n";
-    E.printToConsole();
-    Matrix S = A + B;
-    cout << "The addition of two matrices: \n";
-    S.printToConsole();
-    Matrix R = A - B;
-    cout << "The subtraction of two matrices: \n";
-    R.printToConsole();
-    if (A == B)
-    {
-        cout << "1. Equal" << endl;
-    }
-    else
-    {
-        cout << "1. Different" << endl;
-    }
-
-    if (A != B)
-    {
-        cout << "2. Different" << endl;
-    }
-    else
-    {
-        cout << "2. Equal" << endl;
-    }
-    int row_s1, row_s2;
-    cout << "Print indexes of swapping rows: " << endl;
-    cin >> row_s1 >> row_s2;
-    firstType(A, row_s1 - 1, row_s2 - 1);
-    A.printToConsole();
-    int row_chng;
-    double number;
-    cout << "Print index of changing row: " << endl;
-    cin >> row_chng;
-    cout << "Print the alpha (the number by which we multiply): " << endl;
-    cin >> number;
-    secondType(A, row_chng - 1, number);
-    A.printToConsole();
-    int row_mlted;
-    cout << "Print index of changing row: " << endl;
-    cin >> row_mlted;
-    int row_mlting;
-    cout << "Print index of multiplying row: " << endl;
-    cin >> row_mlting;
-    double cipher;
-    cout << "Print the cipher (the number by which we multiply): " << endl;
-    cin >> cipher;
-    A.printToConsole();
-    thirdType(A, row_mlting - 1, row_mlted - 1, cipher);
-    A.printToConsole();
-    */
-    Matrix<int> Inv = !A;
-    Inv.printToConsole();
     return 0;
 }
