@@ -28,6 +28,7 @@ public:
 
     Matrix& Multiply(const T);
 
+    Matrix<T>& operator=(const Matrix<T>& other);
     friend Matrix operator* (const Matrix&, const Matrix&);
     friend Matrix operator* (const Matrix&, const T);
     friend Matrix operator* (const T, const Matrix&);
@@ -231,6 +232,33 @@ Matrix<T>& Matrix<T>::Multiply(const T value)
             matrix[r][c] *= value;
         }
     }
+    return *this;
+}
+
+template <class T>
+Matrix<T>& Matrix<T>::operator=(const Matrix<T>& other)
+{
+    if (this != &other)
+    {
+        for (int i = 0; i < rows; ++i)
+        {
+            delete[] matrix[i];
+        }
+        delete[] matrix;
+
+        rows = other.rows;
+        columns = other.columns;
+        matrix = new T*[rows];
+        for (int i = 0; i < rows; ++i)
+        {
+            matrix[i] = new T[columns];
+            for (int j = 0; j < columns; ++j)
+            {
+                matrix[i][j] = other.matrix[i][j];
+            }
+        }
+    }
+
     return *this;
 }
 
